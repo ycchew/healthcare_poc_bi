@@ -1,0 +1,66 @@
+# Dependencies
+node_modules/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Environment
+.env
+.env.local
+.env.*.local
+.env.*
+*.env
+
+# Cache
+.ruff_cache/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Build outputs
+dist/
+build/
+
+# Temporary files
+*.tmp
+*.temp
+nul
+
+# privacy
+docs/
+backup/
+
+# Python virtual environments
+.venv/
+venv/
+env/
+
+# Credentials and secrets
+*credentials*
+*secrets*
+*_secret*
+secrets.yaml
+secrets.yml
+secrets.json
+
+# Key files
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Database dumps and backups
+*.dump
+*.sql.gz
+*.bak

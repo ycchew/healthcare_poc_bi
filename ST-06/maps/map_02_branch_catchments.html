@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html>
+<head>
+    
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-glyphicons.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.2.0/css/all.min.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/python-visualization/folium/folium/templates/leaflet.awesome.rotate.min.css"/>
+    
+            <meta name="viewport" content="width=device-width,
+                initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+            <style>
+                #map_70cadbcb33a07edacad1099cde28c97b {
+                    position: relative;
+                    width: 100.0%;
+                    height: 100.0%;
+                    left: 0.0%;
+                    top: 0.0%;
+                }
+                .leaflet-container { font-size: 1rem; }
+            </style>
+
+            <style>html, body {
+                width: 100%;
+                height: 100%;
+                margin: 0;
+                padding: 0;
+            }
+            </style>
+
+            <style>#map {
+                position:absolute;
+                top:0;
+                bottom:0;
+                right:0;
+                left:0;
+                }
+            </style>
+
+            <script>
+                L_NO_TOUCH = false;
+                L_DISABLE_3D = false;
+            </script>
+
+        
+    <script src="https://cdn.jsdelivr.net/npm/leaflet.fullscreen@3.0.0/Control.FullScreen.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet.fullscreen@3.0.0/Control.FullScreen.css"/>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-minimap/3.6.1/Control.MiniMap.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet-minimap/3.6.1/Control.MiniMap.css"/>
+    <script src="https://cdn.jsdelivr.net/gh/ljagis/leaflet-measure@2.1.7/dist/leaflet-measure.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/ljagis/leaflet-measure@2.1.7/dist/leaflet-measure.min.css"/>
+</head>
+<body>
+    
+    
+        <div style="position:fixed;bottom:30px;left:30px;z-index:1000;
+                    background:white;padding:10px;border:2px solid grey;
+                    border-radius:6px;font-size:12px">
+        <b>Branch Catchment</b><br>
+        <span style="color:#E63946">●</span> Branch Location<br>
+        <span style="color:#E63946;opacity:0.3">●</span> Catchment Radius
+        </div>
+        
+    
+            <div class="folium-map" id="map_70cadbcb33a07edacad1099cde28c97b" ></div>
+        
+</body>
+<script>
+    
+    
+            var map_70cadbcb33a07edacad1099cde28c97b = L.map(
+                "map_70cadbcb33a07edacad1099cde28c97b",
+                {
+                    center: [3.9, 108.5],
+                    crs: L.CRS.EPSG3857,
+                    ...{
+  "zoom": 6,
+  "zoomControl": true,
+  "preferCanvas": false,
+}
+
+                }
+            );
+
+            
+
+        
+    
+            var tile_layer_d3e2044b46a7f067e929cb6cdc637708 = L.tileLayer(
+                "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
+                {
+  "minZoom": 0,
+  "maxZoom": 20,
+  "maxNativeZoom": 20,
+  "noWrap": false,
+  "attribution": "\u0026copy; \u003ca href=\"https://www.openstreetmap.org/copyright\"\u003eOpenStreetMap\u003c/a\u003e contributors \u0026copy; \u003ca href=\"https://carto.com/attributions\"\u003eCARTO\u003c/a\u003e",
+  "subdomains": "abcd",
+  "detectRetina": false,
+  "tms": false,
+  "opacity": 1,
+}
+
+            );
+        
+    
+            tile_layer_d3e2044b46a7f067e929cb6cdc637708.addTo(map_70cadbcb33a07edacad1099cde28c97b);
+        
+    
+            var circle_c42b1282dfe66fbc5cdd76685fdc6da9 = L.circle(
+                [2.992, 101.79],
+                {"bubblingMouseEvents": true, "color": "#E63946", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#E63946", "fillOpacity": 0.2, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 10000, "stroke": true, "weight": 3}
+            ).addTo(map_70cadbcb33a07edacad1099cde28c97b);
+        
+    
+        var popup_a7e86ba41f5df9087016d0b3d9ed8f9d = L.popup({
+  "maxWidth": 250,
+});
+
+        
+            
+                var html_c6e9bf887ab9b0a75eb4715ffe43e0be = $(`<div id="html_c6e9bf887ab9b0a75eb4715ffe43e0be" style="width: 100.0%; height: 100.0%;"><b>KJG</b><br>📍 Catchment Radius: 10.0 km<br>👥 Total Patients: 2718</div>`)[0];
+                popup_a7e86ba41f5df9087016d0b3d9ed8f9d.setContent(html_c6e9bf887ab9b0a75eb4715ffe43e0be);
+            
+        
+
+        circle_c42b1282dfe66fbc5cdd76685fdc6da9.bindPopup(popup_a7e86ba41f5df9087016d0b3d9ed8f9d)
+        ;
+
+        
+    
+    
+            var marker_1d05399cc8ecd76fb0b76d1f515d2fb2 = L.marker(
+                [2.992, 101.79],
+                {
+}
+            ).addTo(map_70cadbcb33a07edacad1099cde28c97b);
+        
+    
+            var icon_47c2a8856b197cf8a68a77967f85f659 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "red",
+  "iconColor": "white",
+  "icon": "hospital",
+  "prefix": "fa",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_6dd17d273245fff1aa95236ab03bf2b0 = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_979be75c10b0b339387951c28b8ffc14 = $(`<div id="html_979be75c10b0b339387951c28b8ffc14" style="width: 100.0%; height: 100.0%;"><b>KJG</b></div>`)[0];
+                popup_6dd17d273245fff1aa95236ab03bf2b0.setContent(html_979be75c10b0b339387951c28b8ffc14);
+            
+        
+
+        marker_1d05399cc8ecd76fb0b76d1f515d2fb2.bindPopup(popup_6dd17d273245fff1aa95236ab03bf2b0)
+        ;
+
+        
+    
+    
+                marker_1d05399cc8ecd76fb0b76d1f515d2fb2.setIcon(icon_47c2a8856b197cf8a68a77967f85f659);
+            
+    
+            var circle_005c9a748eab1a81ef4273194e391d6d = L.circle(
+                [2.9213, 101.656],
+                {"bubblingMouseEvents": true, "color": "#E63946", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#E63946", "fillOpacity": 0.2, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 10000, "stroke": true, "weight": 3}
+            ).addTo(map_70cadbcb33a07edacad1099cde28c97b);
+        
+    
+        var popup_548d99613f828b43e889266f2779cffb = L.popup({
+  "maxWidth": 250,
+});
+
+        
+            
+                var html_77eee13a1fa99a6ebc638a501a194593 = $(`<div id="html_77eee13a1fa99a6ebc638a501a194593" style="width: 100.0%; height: 100.0%;"><b>CYB</b><br>📍 Catchment Radius: 10.0 km<br>👥 Total Patients: 734</div>`)[0];
+                popup_548d99613f828b43e889266f2779cffb.setContent(html_77eee13a1fa99a6ebc638a501a194593);
+            
+        
+
+        circle_005c9a748eab1a81ef4273194e391d6d.bindPopup(popup_548d99613f828b43e889266f2779cffb)
+        ;
+
+        
+    
+    
+            var marker_340060f881b4eb03e9ee07ae4a3f1874 = L.marker(
+                [2.9213, 101.656],
+                {
+}
+            ).addTo(map_70cadbcb33a07edacad1099cde28c97b);
+        
+    
+            var icon_c24f1e3921db88137d9db2334dc886cc = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "red",
+  "iconColor": "white",
+  "icon": "hospital",
+  "prefix": "fa",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_da80b58d2a189fc7611633f5cae27b2b = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_9638568b667be5a0a79c465f4d88b691 = $(`<div id="html_9638568b667be5a0a79c465f4d88b691" style="width: 100.0%; height: 100.0%;"><b>CYB</b></div>`)[0];
+                popup_da80b58d2a189fc7611633f5cae27b2b.setContent(html_9638568b667be5a0a79c465f4d88b691);
+            
+        
+
+        marker_340060f881b4eb03e9ee07ae4a3f1874.bindPopup(popup_da80b58d2a189fc7611633f5cae27b2b)
+        ;
+
+        
+    
+    
+                marker_340060f881b4eb03e9ee07ae4a3f1874.setIcon(icon_c24f1e3921db88137d9db2334dc886cc);
+            
+    
+            var circle_955ff944c56ef27ac3b6e6fa7983599f = L.circle(
+                [3.0499, 101.5883],
+                {"bubblingMouseEvents": true, "color": "#E63946", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#E63946", "fillOpacity": 0.2, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 10000, "stroke": true, "weight": 3}
+            ).addTo(map_70cadbcb33a07edacad1099cde28c97b);
+        
+    
+        var popup_d66f45679486f4c4abdd0950101ebc08 = L.popup({
+  "maxWidth": 250,
+});
+
+        
+            
+                var html_a44534fd758321d21f3ad0c51e72d63d = $(`<div id="html_a44534fd758321d21f3ad0c51e72d63d" style="width: 100.0%; height: 100.0%;"><b>SBH</b><br>📍 Catchment Radius: 10.0 km<br>👥 Total Patients: 256</div>`)[0];
+                popup_d66f45679486f4c4abdd0950101ebc08.setContent(html_a44534fd758321d21f3ad0c51e72d63d);
+            
+        
+
+        circle_955ff944c56ef27ac3b6e6fa7983599f.bindPopup(popup_d66f45679486f4c4abdd0950101ebc08)
+        ;
+
+        
+    
+    
+            var marker_45108fc4a4b05d3dd0fd85fac7d3c29b = L.marker(
+                [3.0499, 101.5883],
+                {
+}
+            ).addTo(map_70cadbcb33a07edacad1099cde28c97b);
+        
+    
+            var icon_01582d07a86198d4596bc66d06c2e9b2 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "red",
+  "iconColor": "white",
+  "icon": "hospital",
+  "prefix": "fa",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_524055ccf6457ac33667673870e2653a = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_0ea41237f4bc44782067fefd949a79a1 = $(`<div id="html_0ea41237f4bc44782067fefd949a79a1" style="width: 100.0%; height: 100.0%;"><b>SBH</b></div>`)[0];
+                popup_524055ccf6457ac33667673870e2653a.setContent(html_0ea41237f4bc44782067fefd949a79a1);
+            
+        
+
+        marker_45108fc4a4b05d3dd0fd85fac7d3c29b.bindPopup(popup_524055ccf6457ac33667673870e2653a)
+        ;
+
+        
+    
+    
+                marker_45108fc4a4b05d3dd0fd85fac7d3c29b.setIcon(icon_01582d07a86198d4596bc66d06c2e9b2);
+            
+    
+            var circle_a673b1758a6c0c1d4a0735cb2879d470 = L.circle(
+                [5.4141, 100.3288],
+                {"bubblingMouseEvents": true, "color": "#E63946", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#E63946", "fillOpacity": 0.2, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 10000, "stroke": true, "weight": 3}
+            ).addTo(map_70cadbcb33a07edacad1099cde28c97b);
+        
+    
+        var popup_840fcce0be747688038dece4055b5687 = L.popup({
+  "maxWidth": 250,
+});
+
+        
+            
+                var html_629779b728a55d67ca44614659bec392 = $(`<div id="html_629779b728a55d67ca44614659bec392" style="width: 100.0%; height: 100.0%;"><b>PKL</b><br>📍 Catchment Radius: 10.0 km<br>👥 Total Patients: 236</div>`)[0];
+                popup_840fcce0be747688038dece4055b5687.setContent(html_629779b728a55d67ca44614659bec392);
+            
+        
+
+        circle_a673b1758a6c0c1d4a0735cb2879d470.bindPopup(popup_840fcce0be747688038dece4055b5687)
+        ;
+
+        
+    
+    
+            var marker_1bd7217fa68e3b84f6409012fb65e7aa = L.marker(
+                [5.4141, 100.3288],
+                {
+}
+            ).addTo(map_70cadbcb33a07edacad1099cde28c97b);
+        
+    
+            var icon_cf5663ca03bba79ff0d7d500627fd95c = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "red",
+  "iconColor": "white",
+  "icon": "hospital",
+  "prefix": "fa",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_03f89925339b94c88b589fa338155c96 = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_eace24f66a1cba7ffa185e2672f6c4f7 = $(`<div id="html_eace24f66a1cba7ffa185e2672f6c4f7" style="width: 100.0%; height: 100.0%;"><b>PKL</b></div>`)[0];
+                popup_03f89925339b94c88b589fa338155c96.setContent(html_eace24f66a1cba7ffa185e2672f6c4f7);
+            
+        
+
+        marker_1bd7217fa68e3b84f6409012fb65e7aa.bindPopup(popup_03f89925339b94c88b589fa338155c96)
+        ;
+
+        
+    
+    
+                marker_1bd7217fa68e3b84f6409012fb65e7aa.setIcon(icon_cf5663ca03bba79ff0d7d500627fd95c);
+            
+    
+            var circle_98c0d83303f2f549c5c28bc88104374b = L.circle(
+                [3.1478, 101.7619],
+                {"bubblingMouseEvents": true, "color": "#E63946", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#E63946", "fillOpacity": 0.2, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 10000, "stroke": true, "weight": 3}
+            ).addTo(map_70cadbcb33a07edacad1099cde28c97b);
+        
+    
+        var popup_218333d6b22d89434b630ffc3cff3a8c = L.popup({
+  "maxWidth": 250,
+});
+
+        
+            
+                var html_9a694017d0d63446eef1df8e2364e726 = $(`<div id="html_9a694017d0d63446eef1df8e2364e726" style="width: 100.0%; height: 100.0%;"><b>AMP</b><br>📍 Catchment Radius: 10.0 km<br>👥 Total Patients: 2330</div>`)[0];
+                popup_218333d6b22d89434b630ffc3cff3a8c.setContent(html_9a694017d0d63446eef1df8e2364e726);
+            
+        
+
+        circle_98c0d83303f2f549c5c28bc88104374b.bindPopup(popup_218333d6b22d89434b630ffc3cff3a8c)
+        ;
+
+        
+    
+    
+            var marker_898020bae026796f3eb2497feee9d187 = L.marker(
+                [3.1478, 101.7619],
+                {
+}
+            ).addTo(map_70cadbcb33a07edacad1099cde28c97b);
+        
+    
+            var icon_d87f36612eee5a7647a812210ad047cf = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "red",
+  "iconColor": "white",
+  "icon": "hospital",
+  "prefix": "fa",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_f87b6c0eddf5bca2869dc3a3e356620c = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_fecfb9ad0edf609223054c68332f36e6 = $(`<div id="html_fecfb9ad0edf609223054c68332f36e6" style="width: 100.0%; height: 100.0%;"><b>AMP</b></div>`)[0];
+                popup_f87b6c0eddf5bca2869dc3a3e356620c.setContent(html_fecfb9ad0edf609223054c68332f36e6);
+            
+        
+
+        marker_898020bae026796f3eb2497feee9d187.bindPopup(popup_f87b6c0eddf5bca2869dc3a3e356620c)
+        ;
+
+        
+    
+    
+                marker_898020bae026796f3eb2497feee9d187.setIcon(icon_d87f36612eee5a7647a812210ad047cf);
+            
+    
+            L.control.fullscreen(
+                {
+  "position": "topleft",
+  "title": "Full Screen",
+  "titleCancel": "Exit Full Screen",
+  "forceSeparateButton": false,
+}
+            ).addTo(map_70cadbcb33a07edacad1099cde28c97b);
+        
+    
+            var tile_layer_a51fd9efe70ebe2e157b0e2ab52ed11c = L.tileLayer(
+                "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+                {"attribution": "\u0026copy; \u003ca href=\"https://www.openstreetmap.org/copyright\"\u003eOpenStreetMap\u003c/a\u003e contributors", "detect_retina": false, "max_native_zoom": 19, "max_zoom": 19, "min_zoom": 0, "no_wrap": false, "opacity": 1, "subdomains": "abc", "tms": false}
+            );
+            var mini_map_462ab2366291d69e26ea670b90920a7a = new L.Control.MiniMap(
+                tile_layer_a51fd9efe70ebe2e157b0e2ab52ed11c,
+                {
+  "position": "bottomright",
+  "width": 150,
+  "height": 150,
+  "collapsedWidth": 25,
+  "collapsedHeight": 25,
+  "zoomLevelOffset": -5,
+  "centerFixed": false,
+  "zoomAnimation": false,
+  "toggleDisplay": false,
+  "autoToggleDisplay": false,
+  "minimized": false,
+}
+            );
+            map_70cadbcb33a07edacad1099cde28c97b.addControl(mini_map_462ab2366291d69e26ea670b90920a7a);
+        
+    
+            var measure_control_7857484d7beffea591c60d991bfd368f = new L.Control.Measure(
+                {
+  "position": "topright",
+  "primaryLengthUnit": "meters",
+  "secondaryLengthUnit": "miles",
+  "primaryAreaUnit": "sqmeters",
+  "secondaryAreaUnit": "acres",
+});
+            map_70cadbcb33a07edacad1099cde28c97b.addControl(measure_control_7857484d7beffea591c60d991bfd368f);
+
+            // Workaround for using this plugin with Leaflet>=1.8.0
+            // https://github.com/ljagis/leaflet-measure/issues/171
+            L.Control.Measure.include({
+                _setCaptureMarkerIcon: function () {
+                    // disable autopan
+                    this._captureMarker.options.autoPanOnFocus = false;
+                    // default function
+                    this._captureMarker.setIcon(
+                        L.divIcon({
+                            iconSize: this._map.getSize().multiplyBy(2)
+                        })
+                    );
+                },
+            });
+
+        
+</script>
+</html>

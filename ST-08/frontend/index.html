@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Healthcare Analytics Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #F5F7F9;
+            color: #1A1A1A;
+            min-width: 1200px;
+        }
+        .header {
+            background: #FFFFFF;
+            border-bottom: 1px solid #D4D4D4;
+            padding: 12px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .header h1 { font-size: 20px; font-weight: 600; color: #2E5C6E; }
+        .header-right { display: flex; align-items: center; gap: 16px; }
+        .date-filter { display: flex; align-items: center; gap: 8px; }
+        .date-filter label { font-size: 12px; color: #4A4A4A; font-weight: 500; }
+        .date-filter input[type="date"] {
+            padding: 4px 8px;
+            border: 1px solid #D4D4D4;
+            border-radius: 4px;
+            font-size: 12px;
+            color: #1A1A1A;
+            background: #F5F7F9;
+        }
+        .date-filter button {
+            padding: 4px 12px;
+            background: #2E5C6E;
+            color: #FFFFFF;
+            border: none;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        .date-filter button:hover { background: #4A7C8C; }
+        .header .refresh-time { font-size: 12px; color: #8C8C8C; }
+        .tabs {
+            background: #FFFFFF;
+            border-bottom: 1px solid #D4D4D4;
+            padding: 0 24px;
+            display: flex;
+            gap: 0;
+        }
+        .tab-btn {
+            padding: 12px 24px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            color: #4A4A4A;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s;
+        }
+        .tab-btn:hover { color: #2E5C6E; background: #F5F7F9; }
+        .tab-btn.active { color: #2E5C6E; border-bottom-color: #2E5C6E; font-weight: 600; }
+        .tab-content { display: none; padding: 20px 24px; }
+        .tab-content.active { display: block; }
+        .kpi-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+        .kpi-card {
+            background: #FFFFFF;
+            border: 1px solid #D4D4D4;
+            border-radius: 8px;
+            padding: 16px;
+            text-align: center;
+        }
+        .kpi-card .label { font-size: 12px; color: #4A4A4A; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .kpi-card .value { font-size: 28px; font-weight: 700; color: #1A1A1A; }
+        .kpi-card .value.positive { color: #2D7A4F; }
+        .kpi-card .value.negative { color: #B91C1C; }
+        .chart-row { display: grid; gap: 16px; margin-bottom: 16px; }
+        .chart-row.two { grid-template-columns: 3fr 2fr; }
+        .chart-row.three { grid-template-columns: 2fr 1.5fr 1.5fr; }
+        .chart-row.two-equal { grid-template-columns: 1fr 1fr; }
+        .chart-container {
+            background: #FFFFFF;
+            border: 1px solid #D4D4D4;
+            border-radius: 8px;
+            padding: 16px;
+            min-height: 300px;
+            position: relative;
+        }
+        .chart-container.tall { min-height: 400px; }
+        .chart-container .chart-title { font-size: 14px; font-weight: 600; color: #2E5C6E; margin-bottom: 12px; }
+        .chart { width: 100%; height: calc(100% - 30px); min-height: 260px; }
+        .data-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        .data-table th { background: #2E5C6E; color: #FFFFFF; padding: 8px 12px; text-align: left; font-weight: 600; position: sticky; top: 0; }
+        .data-table td { padding: 6px 12px; border-bottom: 1px solid #F5F7F9; }
+        .data-table tr:nth-child(even) { background: #F5F7F9; }
+        .data-table tr:hover { background: #E8F0F2; }
+        .table-scroll { max-height: 300px; overflow-y: auto; }
+        .no-data { display: flex; align-items: center; justify-content: center; height: 200px; color: #8C8C8C; font-size: 14px; }
+        .loading { display: flex; align-items: center; justify-content: center; height: 200px; color: #4A7C8C; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Healthcare Analytics Dashboard</h1>
+        <div class="header-right">
+            <div class="date-filter">
+                <label>From:</label>
+                <input type="date" id="date-start" value="2024-01-01">
+                <label>To:</label>
+                <input type="date" id="date-end" value="2024-12-31">
+                <button id="date-apply">Apply</button>
+            </div>
+            <span class="refresh-time" id="refresh-time"></span>
+        </div>
+    </div>
+    <div class="tabs" id="tabs">
+        <button class="tab-btn active" data-tab="overview">Executive Overview</button>
+        <button class="tab-btn" data-tab="revenue">Revenue & Branch</button>
+        <button class="tab-btn" data-tab="patients">Patient Intelligence</button>
+        <button class="tab-btn" data-tab="products">Product & Package</button>
+        <button class="tab-btn" data-tab="ml">AI Predictions</button>
+        <button class="tab-btn" data-tab="geo">Geospatial</button>
+    </div>
+
+    <!-- Tab 1: Executive Overview -->
+    <div class="tab-content active" id="tab-overview">
+        <div class="kpi-row" id="overview-kpis">
+            <div class="kpi-card"><div class="label">Revenue MTD</div><div class="value" id="kpi-revenue-mtd">—</div></div>
+            <div class="kpi-card"><div class="label">Growth MoM</div><div class="value" id="kpi-mom-growth">—</div></div>
+            <div class="kpi-card"><div class="label">Patients MTD</div><div class="value" id="kpi-patients-mtd">—</div></div>
+            <div class="kpi-card"><div class="label">Patient Growth</div><div class="value" id="kpi-patient-growth">—</div></div>
+            <div class="kpi-card"><div class="label">Avg Transaction</div><div class="value" id="kpi-avg-txn">—</div></div>
+            <div class="kpi-card"><div class="label">Active Branches</div><div class="value" id="kpi-active-branches">—</div></div>
+        </div>
+        <div class="chart-row two">
+            <div class="chart-container tall">
+                <div class="chart-title">Revenue Trend (12 Months)</div>
+                <div class="chart" id="chart-revenue-trend"></div>
+            </div>
+            <div class="chart-container tall">
+                <div class="chart-title">Revenue by Branch</div>
+                <div class="chart" id="chart-branch-revenue"></div>
+            </div>
+        </div>
+        <div class="chart-row three">
+            <div class="chart-container">
+                <div class="chart-title">Category Mix</div>
+                <div class="chart" id="chart-category-mix"></div>
+            </div>
+            <div class="chart-container">
+                <div class="chart-title">Patient Status</div>
+                <div class="chart" id="chart-patient-status"></div>
+            </div>
+            <div class="chart-container">
+                <div class="chart-title">Alerts</div>
+                <div class="table-scroll" id="table-alerts"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tab 2: Revenue & Branch -->
+    <div class="tab-content" id="tab-revenue">
+        <div class="chart-row two">
+            <div class="chart-container tall">
+                <div class="chart-title">Revenue Trend & 90-Day Forecast</div>
+                <div class="chart" id="chart-revenue-forecast"></div>
+            </div>
+            <div class="chart-container tall">
+                <div class="chart-title">Branch Performance</div>
+                <div class="table-scroll" id="table-branch-performance"></div>
+            </div>
+        </div>
+        <div class="chart-row three">
+            <div class="chart-container">
+                <div class="chart-title">MoM Change by Branch</div>
+                <div class="chart" id="chart-mom-branch"></div>
+            </div>
+            <div class="chart-container">
+                <div class="chart-title">Tier Distribution</div>
+                <div class="chart" id="chart-tier-dist"></div>
+            </div>
+            <div class="chart-container">
+                <div class="chart-title">Growth Status</div>
+                <div class="chart" id="chart-growth-status"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tab 3: Patient Intelligence -->
+    <div class="tab-content" id="tab-patients">
+        <div class="kpi-row" id="patient-kpis">
+            <div class="kpi-card"><div class="label">Total Patients</div><div class="value" id="kpi-total-patients">—</div></div>
+            <div class="kpi-card"><div class="label">Active</div><div class="value" id="kpi-active-patients">—</div></div>
+            <div class="kpi-card"><div class="label">At Risk</div><div class="value" id="kpi-atrisk-patients">—</div></div>
+            <div class="kpi-card"><div class="label">Lost</div><div class="value" id="kpi-lost-patients">—</div></div>
+            <div class="kpi-card"><div class="label">Avg CLTV</div><div class="value" id="kpi-avg-cltv">—</div></div>
+        </div>
+        <div class="chart-row two">
+            <div class="chart-container tall">
+                <div class="chart-title">RFM Segment Distribution</div>
+                <div class="chart" id="chart-rfm-treemap"></div>
+            </div>
+            <div class="chart-container tall">
+                <div class="chart-title">RFM Matrix (Recency x Frequency)</div>
+                <div class="chart" id="chart-rfm-matrix"></div>
+            </div>
+        </div>
+        <div class="chart-row two-equal">
+            <div class="chart-container">
+                <div class="chart-title">LTV Distribution</div>
+                <div class="chart" id="chart-ltv-dist"></div>
+            </div>
+            <div class="chart-container">
+                <div class="chart-title">Priority Action List</div>
+                <div class="table-scroll" id="table-patient-risk"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tab 4: Product & Package -->
+    <div class="tab-content" id="tab-products">
+        <div class="chart-row two">
+            <div class="chart-container tall">
+                <div class="chart-title">Category Mix Trend</div>
+                <div class="chart" id="chart-category-trend"></div>
+            </div>
+            <div class="chart-container tall">
+                <div class="chart-title">Package vs Standalone</div>
+                <div class="chart" id="chart-package-split"></div>
+            </div>
+        </div>
+        <div class="chart-row two">
+            <div class="chart-container">
+                <div class="chart-title">Category Revenue by Branch</div>
+                <div class="chart" id="chart-category-revenue"></div>
+            </div>
+            <div class="chart-container">
+                <div class="chart-title">Payment Mode Distribution</div>
+                <div class="chart" id="chart-payment-mode"></div>
+            </div>
+        </div>
+        <div class="chart-row two-equal">
+            <div class="chart-container">
+                <div class="chart-title">Top Package Compositions</div>
+                <div class="table-scroll" id="table-packages"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tab 5: AI Predictions -->
+    <div class="tab-content" id="tab-ml">
+        <div class="kpi-row" id="ml-kpis">
+            <div class="kpi-card"><div class="label">High Churn Risk</div><div class="value" id="kpi-churn-risk">—</div></div>
+            <div class="kpi-card"><div class="label">Upsell Opps</div><div class="value" id="kpi-upsell-opps">—</div></div>
+            <div class="kpi-card"><div class="label">Avg Discount</div><div class="value" id="kpi-avg-discount">—</div></div>
+            <div class="kpi-card"><div class="label">Model AUC</div><div class="value" id="kpi-model-auc">—</div></div>
+        </div>
+        <div class="chart-row three">
+            <div class="chart-container">
+                <div class="chart-title">Churn Probability Distribution</div>
+                <div class="chart" id="chart-churn-hist"></div>
+            </div>
+            <div class="chart-container">
+                <div class="chart-title">Risk Level Distribution</div>
+                <div class="chart" id="chart-risk-level"></div>
+            </div>
+            <div class="chart-container">
+                <div class="chart-title">Offer Type Distribution</div>
+                <div class="chart" id="chart-offer-type"></div>
+            </div>
+        </div>
+        <div class="chart-row two-equal">
+            <div class="chart-container">
+                <div class="chart-title">High-Priority Outreach List</div>
+                <div class="table-scroll" id="table-outreach"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tab 6: Geospatial -->
+    <div class="tab-content" id="tab-geo">
+        <div class="chart-row two">
+            <div class="chart-container tall" style="grid-column: span 2;">
+                <div class="chart-title">Patient Origin & Branch Catchments</div>
+                <div class="chart" id="chart-geo-map" style="min-height: 450px;"></div>
+            </div>
+        </div>
+        <div class="chart-row three">
+            <div class="chart-container">
+                <div class="chart-title">Distance Band Distribution</div>
+                <div class="chart" id="chart-distance-band"></div>
+            </div>
+            <div class="chart-container">
+                <div class="chart-title">Catchment Penetration</div>
+                <div class="chart" id="chart-catchment"></div>
+            </div>
+            <div class="chart-container">
+                <div class="chart-title">Whitespace Opportunities</div>
+                <div class="table-scroll" id="table-whitespace"></div>
+            </div>
+        </div>
+        <div class="chart-row two-equal">
+            <div class="chart-container">
+                <div class="chart-title">Cannibalization Risk</div>
+                <div class="chart" id="chart-cannibalization"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    const COLORS = {
+        primary: '#2E5C6E', primaryMid: '#4A7C8C', primaryLight: '#6B9AAB',
+        primaryLighter: '#8CB8C4', good: '#2D7A4F', warning: '#D97706',
+        bad: '#B91C1C', purple: '#7C3AED', orange: '#EA580C', blue: '#0369A1',
+        bg: '#F5F7F9', cardBg: '#FFFFFF', border: '#D4D4D4',
+        text: '#1A1A1A', textSecondary: '#4A4A4A', textMuted: '#8C8C8C',
+    };
+    function fmtRM(v) { return v == null ? '—' : 'RM ' + Number(v).toLocaleString('en-MY', {maximumFractionDigits: 0}); }
+    function fmtPct(v) { return v == null ? '—' : Number(v).toFixed(1) + '%'; }
+    function fmtNum(v) { return v == null ? '—' : Number(v).toLocaleString('en-MY'); }
+
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            btn.classList.add('active');
+            document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+            setTimeout(() => {
+                document.querySelectorAll('#tab-' + btn.dataset.tab + ' .chart').forEach(el => {
+                    const chart = echarts.getInstanceByDom(el);
+                    if (chart) chart.resize();
+                });
+            }, 100);
+        });
+    });
+
+    const charts = {};
+    let dateStart = '2024-01-01';
+    let dateEnd = '2024-12-31';
+
+    function dateParams() {
+        return '?start_date=' + dateStart + '&end_date=' + dateEnd;
+    }
+
+    async function loadChart(chartId, endpoint, optionBuilder) {
+        const el = document.getElementById(chartId);
+        if (!el) return;
+        el.innerHTML = '<div class="loading">Loading...</div>';
+        try {
+            const separator = endpoint.includes('?') ? '&' : '?';
+            const res = await fetch(endpoint + separator + 'start_date=' + dateStart + '&end_date=' + dateEnd);
+            const json = await res.json();
+            if (json.error || !json.data || (Array.isArray(json.data) && json.data.length === 0) ||
+                (typeof json.data === 'object' && !Array.isArray(json.data) && Object.keys(json.data).length === 0)) {
+                el.innerHTML = '<div class="no-data">No data available — source: ' + (json.source || 'unknown') + '</div>';
+                return;
+            }
+            if (!charts[chartId]) charts[chartId] = echarts.init(el);
+            charts[chartId].setOption(optionBuilder(json.data), true);
+        } catch (e) {
+            el.innerHTML = '<div class="no-data">Error loading chart: ' + e.message + '</div>';
+        }
+    }
+
+    function fetchJSON(endpoint) {
+        return fetch(endpoint + '?start_date=' + dateStart + '&end_date=' + dateEnd).then(r => r.json());
+    }
+
+    async function refreshDashboard() {
+        // Destroy all existing charts
+        Object.values(charts).forEach(c => c.dispose());
+        Object.keys(charts).forEach(k => delete charts[k]);
+
+        // Reload all tab content
+        loadOverviewKPIs();
+        loadChart('chart-revenue-trend', '/api/revenue/trend', buildRevenueTrend);
+        loadChart('chart-branch-revenue', '/api/branches/performance', buildBranchRevenue);
+        loadChart('chart-category-mix', '/api/products/category-mix', buildCategoryMix);
+        loadChart('chart-patient-status', '/api/patients/dashboard', buildPatientStatus);
+        (async () => { const [risk, branch] = await Promise.all([fetchJSON('/api/patients/risk'), fetchJSON('/api/branches/performance')]); buildAlertsTable(risk.data, branch.data); })();
+
+        loadChart('chart-revenue-forecast', '/api/revenue/forecast', buildRevenueForecast);
+        loadChart('chart-mom-branch', '/api/branches/performance', buildMoMBranch);
+        loadChart('chart-tier-dist', '/api/branches/tier-distribution', buildTierDist);
+        loadChart('chart-growth-status', '/api/branches/tier-distribution', buildGrowthStatus);
+        (async () => { const json = await fetchJSON('/api/branches/performance'); if (!json.error && json.data.length) buildBranchTable(json.data); })();
+
+        loadPatientKPIs();
+        loadChart('chart-rfm-treemap', '/api/patients/rfm', buildRFMTreemap);
+        loadChart('chart-rfm-matrix', '/api/patients/rfm', buildRFMMatrix);
+        loadChart('chart-ltv-dist', '/api/patients/ltv', buildLTVDist);
+        (async () => { const json = await fetchJSON('/api/patients/risk'); if (!json.error) buildPatientRiskTable(json.data); })();
+
+        loadChart('chart-category-trend', '/api/products/category-mix', buildCategoryTrend);
+        loadChart('chart-package-split', '/api/products/package-split', buildPackageSplit);
+        loadChart('chart-category-revenue', '/api/products/category-revenue', buildCategoryRevenue);
+        loadChart('chart-payment-mode', '/api/payments/mode', buildPaymentMode);
+        (async () => { const json = await fetchJSON('/api/packages/composition'); if (!json.error) buildPackageTable(json.data); })();
+
+        loadMLKPIs();
+        loadMLPricingKPIs();
+        loadChart('chart-churn-hist', '/api/ml/predictions', buildChurnHistogram);
+        (async () => {
+            const [pred, price] = await Promise.all([fetchJSON('/api/ml/predictions'), fetchJSON('/api/ml/pricing')]);
+            if (!pred.error) { const distEl = document.getElementById('chart-risk-level'); if (distEl) { if (charts['chart-risk-level']) charts['chart-risk-level'].dispose(); charts['chart-risk-level'] = echarts.init(distEl); charts['chart-risk-level'].setOption(buildRiskLevelPie(pred.data), true); } }
+            if (!price.error) { const offerEl = document.getElementById('chart-offer-type'); if (offerEl) { if (charts['chart-offer-type']) charts['chart-offer-type'].dispose(); charts['chart-offer-type'] = echarts.init(offerEl); charts['chart-offer-type'].setOption(buildOfferTypeBar(price.data), true); } }
+            if (!price.error) buildOutreachTable(price.data);
+        })();
+
+        (async () => {
+            const [pat, br] = await Promise.all([fetchJSON('/api/geo/patients'), fetchJSON('/api/geo/branches')]);
+            const mapEl = document.getElementById('chart-geo-map');
+            if (mapEl) { if (charts['chart-geo-map']) charts['chart-geo-map'].dispose(); charts['chart-geo-map'] = echarts.init(mapEl); charts['chart-geo-map'].setOption(buildGeoMap(pat.data || [], br.data || []), true); }
+            if (!pat.error) { const distEl = document.getElementById('chart-distance-band'); if (distEl) { if (charts['chart-distance-band']) charts['chart-distance-band'].dispose(); charts['chart-distance-band'] = echarts.init(distEl); charts['chart-distance-band'].setOption(buildDistanceBand(pat.data), true); } }
+        })();
+        loadChart('chart-catchment', '/api/geo/catchment', buildCatchmentPenetration);
+        loadChart('chart-cannibalization', '/api/geo/cannibalization', buildCannibalization);
+        (async () => { const json = await fetchJSON('/api/geo/whitespace'); if (!json.error) buildWhitespaceTable(json.data); })();
+
+        document.getElementById('refresh-time').textContent = 'Last Refresh: ' + new Date().toLocaleString('en-MY', {
+            year: 'numeric', month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit'
+        });
+    }
+
+    // Date filter event listener
+    document.getElementById('date-apply').addEventListener('click', () => {
+        dateStart = document.getElementById('date-start').value;
+        dateEnd = document.getElementById('date-end').value;
+        refreshDashboard();
+    });
+
+    document.getElementById('refresh-time').textContent = 'Last Refresh: ' + new Date().toLocaleString('en-MY', {
+        year: 'numeric', month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit'
+    });
+    window.addEventListener('resize', () => { Object.values(charts).forEach(c => c.resize()); });
+    </script>
+
+    <!-- TAB 1: EXECUTIVE OVERVIEW -->
+    <script>
+    async function loadOverviewKPIs() {
+        const res = await fetch('/api/kpi/executive?start_date=' + dateStart + '&end_date=' + dateEnd);
+        const json = await res.json();
+        if (json.error || !json.data || !json.data.length) return;
+        const d = json.data[0];
+        const revEl = document.getElementById('kpi-revenue-mtd');
+        if (revEl) revEl.textContent = fmtRM(d.revenue_mtd);
+        const momEl = document.getElementById('kpi-mom-growth');
+        if (momEl) { momEl.textContent = fmtPct(d.mom_growth_pct); momEl.className = 'value ' + (d.mom_growth_pct > 0 ? 'positive' : d.mom_growth_pct < 0 ? 'negative' : ''); }
+        const patEl = document.getElementById('kpi-patients-mtd');
+        if (patEl) patEl.textContent = fmtNum(d.patients_mtd);
+        const pgEl = document.getElementById('kpi-patient-growth');
+        if (pgEl) { pgEl.textContent = fmtPct(d.patient_growth_pct); pgEl.className = 'value ' + (d.patient_growth_pct > 0 ? 'positive' : d.patient_growth_pct < 0 ? 'negative' : ''); }
+        const avgEl = document.getElementById('kpi-avg-txn');
+        if (avgEl) avgEl.textContent = fmtRM(d.avg_transaction);
+        const brEl = document.getElementById('kpi-active-branches');
+        if (brEl) brEl.textContent = fmtNum(d.active_branches);
+    }
+    function buildRevenueTrend(data) {
+        return { tooltip: { trigger: 'axis' }, legend: { data: ['Revenue', 'Transactions'], bottom: 0 }, grid: { left: 60, right: 60, top: 20, bottom: 40 }, xAxis: { type: 'category', data: data.map(d => d.month_start), axisLabel: { rotate: 45, fontSize: 10 } }, yAxis: [{ type: 'value', name: 'Revenue (RM)', axisLabel: { formatter: v => 'RM ' + (v/1000).toFixed(0) + 'K' } }, { type: 'value', name: 'Transactions', axisLabel: { formatter: v => (v/1000).toFixed(0) + 'K' } }], series: [{ name: 'Revenue', type: 'line', data: data.map(d => d.total_revenue), smooth: true, lineStyle: { width: 3, color: COLORS.primary }, itemStyle: { color: COLORS.primary } }, { name: 'Transactions', type: 'bar', data: data.map(d => d.total_transactions), yAxisIndex: 1, itemStyle: { color: COLORS.primaryMid } }] };
+    }
+    function buildBranchRevenue(data) {
+        const sorted = [...data].sort((a, b) => (b.monthly_revenue || 0) - (a.monthly_revenue || 0));
+        return { tooltip: { trigger: 'axis', formatter: p => p[0].name + ': ' + fmtRM(p[0].value) }, grid: { left: 100, right: 80, top: 10, bottom: 20 }, xAxis: { type: 'value', axisLabel: { formatter: v => 'RM ' + (v/1000).toFixed(0) + 'K' } }, yAxis: { type: 'category', data: sorted.map(d => d.branch).reverse(), axisLabel: { fontSize: 10 } }, series: [{ type: 'bar', data: sorted.map(d => d.monthly_revenue).reverse(), itemStyle: { color: COLORS.primary }, label: { show: true, position: 'right', formatter: p => fmtRM(p.value), fontSize: 9 } }] };
+    }
+    function buildCategoryMix(data) {
+        const latest = data[data.length - 1];
+        const cats = [{ name: 'Consultations', value: latest.consultations_pct || 0 }, { name: 'Services', value: latest.services_pct || 0 }, { name: 'Medications', value: latest.medications_pct || 0 }, { name: 'Supplements', value: latest.supplements_pct || 0 }, { name: 'Skincare', value: latest.skincare_pct || 0 }, { name: 'Other', value: latest.other_pct || 0 }];
+        return { tooltip: { trigger: 'item', formatter: '{b}: {d}%' }, series: [{ type: 'pie', radius: ['40%', '70%'], data: cats, label: { show: true, formatter: '{b}\n{d}%', fontSize: 10 }, itemStyle: { color: p => [COLORS.primary, COLORS.primaryMid, COLORS.primaryLight, COLORS.good, COLORS.primaryLighter, COLORS.textMuted][p.dataIndex] } }] };
+    }
+    function buildPatientStatus(data) {
+        if (!data.length) return { title: { text: 'No data' } };
+        const d = data[0];
+        return { tooltip: { trigger: 'axis' }, grid: { left: 80, right: 60, top: 10, bottom: 20 }, xAxis: { type: 'value' }, yAxis: { type: 'category', data: ['New', 'Active', 'At Risk', 'High Risk', 'Lost'] }, series: [{ type: 'bar', data: [{ value: d.new_patients || 0, itemStyle: { color: COLORS.blue } }, { value: d.active_patients || 0, itemStyle: { color: COLORS.good } }, { value: d.at_risk_patients || 0, itemStyle: { color: COLORS.warning } }, { value: d.high_risk_patients || 0, itemStyle: { color: COLORS.orange } }, { value: d.lost_patients || 0, itemStyle: { color: COLORS.bad } }], label: { show: true, position: 'right' } }] };
+    }
+    function buildAlertsTable(riskData, branchData) {
+        const el = document.getElementById('table-alerts');
+        if (!el) return;
+        let rows = '';
+        if (riskData && riskData.length) { riskData.slice(0, 10).forEach(r => { rows += '<tr><td>' + (r.patient_status || '') + '</td><td>' + (r.value_tier || '') + '</td><td>' + fmtRM(r.revenue_at_risk) + '</td><td>' + (r.retention_action || '') + '</td></tr>'; }); }
+        el.innerHTML = '<table class="data-table"><thead><tr><th>Status</th><th>Tier</th><th>Revenue at Risk</th><th>Action</th></tr></thead><tbody>' + (rows || '<tr><td colspan="4">No alerts</td></tr>') + '</tbody></table>';
+    }
+    loadOverviewKPIs();
+    loadChart('chart-revenue-trend', '/api/revenue/trend', buildRevenueTrend);
+    loadChart('chart-branch-revenue', '/api/branches/performance', buildBranchRevenue);
+    loadChart('chart-category-mix', '/api/products/category-mix', buildCategoryMix);
+    loadChart('chart-patient-status', '/api/patients/dashboard', buildPatientStatus);
+        (async () => { const [risk, branch] = await Promise.all([fetchJSON('/api/patients/risk'), fetchJSON('/api/branches/performance')]); buildAlertsTable(risk.data, branch.data); })();
+    </script>
+
+    <!-- TAB 2: REVENUE & BRANCH -->
+    <script>
+    function buildRevenueForecast(data) {
+        const actuals = data.filter(d => d.type === 'actual').sort((a, b) => a.date.localeCompare(b.date));
+        const forecasts = data.filter(d => d.type === 'forecast').sort((a, b) => a.date.localeCompare(b.date));
+        return { tooltip: { trigger: 'axis' }, legend: { data: ['Actual', 'Forecast', 'Confidence Band'], bottom: 0 }, grid: { left: 60, right: 60, top: 20, bottom: 40 }, xAxis: { type: 'category', data: [...actuals, ...forecasts].map(d => d.date.substring(0, 7)), axisLabel: { rotate: 45, fontSize: 10 } }, yAxis: { type: 'value', axisLabel: { formatter: v => 'RM ' + (v/1000).toFixed(0) + 'K' } }, series: [{ name: 'Actual', type: 'line', data: actuals.map(d => d.value), lineStyle: { width: 3, color: COLORS.primary }, itemStyle: { color: COLORS.primary } }, { name: 'Forecast', type: 'line', data: forecasts.map(d => d.value), lineStyle: { width: 2, type: 'dashed', color: COLORS.primaryMid }, itemStyle: { color: COLORS.primaryMid } }, { name: 'Confidence Band', type: 'line', data: forecasts.map(d => d.upper), lineStyle: { width: 0 }, areaStyle: { color: COLORS.primaryMid, opacity: 0.15 }, symbol: 'none' }] };
+    }
+    function buildMoMBranch(data) {
+        const sorted = [...data].sort((a, b) => (b.mom_revenue_growth_pct || 0) - (a.mom_revenue_growth_pct || 0));
+        return { tooltip: { trigger: 'axis', formatter: p => p[0].name + ': ' + fmtPct(p[0].value) }, grid: { left: 100, right: 60, top: 10, bottom: 20 }, xAxis: { type: 'value', axisLabel: { formatter: v => fmtPct(v) } }, yAxis: { type: 'category', data: sorted.map(d => d.branch).reverse() }, series: [{ type: 'bar', data: sorted.map(d => ({ value: d.mom_revenue_growth_pct, itemStyle: { color: (d.mom_revenue_growth_pct || 0) >= 0 ? COLORS.good : COLORS.bad } })).reverse(), label: { show: true, position: 'right', formatter: p => fmtPct(p.value), fontSize: 9 } }] };
+    }
+    function buildBranchTable(data) {
+        const el = document.getElementById('table-branch-performance');
+        if (!el) return;
+        let rows = data.slice(0, 20).map(d => '<tr><td>' + d.branch + '</td><td>' + fmtRM(d.monthly_revenue) + '</td><td>' + fmtPct(d.mom_revenue_growth_pct) + '</td><td><span style="padding:2px 8px;border-radius:4px;background:' + (d.performance_tier==='Tier 1'?COLORS.good:d.performance_tier==='Tier 2'?COLORS.primaryMid:d.performance_tier==='Tier 3'?COLORS.warning:COLORS.bad) + ';color:#fff;font-size:10px">' + (d.performance_tier||'') + '</span></td><td>' + (d.growth_status||'') + '</td></tr>').join('');
+        el.innerHTML = '<table class="data-table"><thead><tr><th>Branch</th><th>Revenue</th><th>MoM%</th><th>Tier</th><th>Status</th></tr></thead><tbody>' + rows + '</tbody></table>';
+    }
+    function buildTierDist(data) {
+        const tierMap = {};
+        data.forEach(d => { tierMap[d.performance_tier] = (tierMap[d.performance_tier] || 0) + (d.branch_count || 0); });
+        return { tooltip: { trigger: 'item' }, xAxis: { type: 'category', data: Object.keys(tierMap), axisLabel: { fontSize: 10 } }, yAxis: { type: 'value' }, series: [{ type: 'bar', data: Object.values(tierMap), itemStyle: { color: p => [COLORS.good, COLORS.primaryMid, COLORS.warning, COLORS.bad][p.dataIndex] }, label: { show: true, position: 'top' } }] };
+    }
+    function buildGrowthStatus(data) {
+        const statusMap = {};
+        data.forEach(d => { statusMap[d.growth_status] = (statusMap[d.growth_status] || 0) + (d.branch_count || 0); });
+        return { tooltip: { trigger: 'item', formatter: '{b}: {c} branches ({d}%)' }, series: [{ type: 'pie', radius: ['40%', '70%'], data: Object.entries(statusMap).map(([n, v]) => ({ name: n, value: v })), itemStyle: { color: p => p.name === 'Growing' ? COLORS.good : p.name === 'Stable' ? COLORS.warning : COLORS.bad } }] };
+    }
+    loadChart('chart-revenue-forecast', '/api/revenue/forecast', buildRevenueForecast);
+    loadChart('chart-mom-branch', '/api/branches/performance', buildMoMBranch);
+    loadChart('chart-tier-dist', '/api/branches/tier-distribution', buildTierDist);
+    loadChart('chart-growth-status', '/api/branches/tier-distribution', buildGrowthStatus);
+        (async () => { const res = await fetch('/api/branches/performance?start_date=' + dateStart + '&end_date=' + dateEnd); const json = await res.json(); if (!json.error && json.data.length) buildBranchTable(json.data); })();
+    </script>
+
+    <!-- TAB 3: PATIENT INTELLIGENCE -->
+    <script>
+    async function loadPatientKPIs() {
+        const [dashRes, ltvRes] = await Promise.all([fetch('/api/patients/dashboard?start_date=' + dateStart + '&end_date=' + dateEnd), fetch('/api/patients/ltv?start_date=' + dateStart + '&end_date=' + dateEnd)]);
+        const dash = await dashRes.json(); const ltv = await ltvRes.json();
+        if (!dash.error && dash.data.length) { const d = dash.data[0]; const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = fmtNum(v); }; set('kpi-total-patients', d.total_patients); set('kpi-active-patients', d.active_patients); set('kpi-atrisk-patients', d.at_risk_patients); set('kpi-lost-patients', d.lost_patients); }
+        if (!ltv.error && ltv.data.length) { const avgCLTV = ltv.data.reduce((s, d) => s + (d.avg_observed_ltv || 0), 0) / ltv.data.length; const el = document.getElementById('kpi-avg-cltv'); if (el) el.textContent = fmtRM(avgCLTV); }
+    }
+    function buildRFMTreemap(data) {
+        const segMap = {};
+        data.forEach(d => { segMap[d.rfm_segment] = (segMap[d.rfm_segment] || 0) + 1; });
+        const segColors = { 'Champions': COLORS.good, 'Loyal Customers': COLORS.primary, 'Potential Loyalists': COLORS.primaryMid, 'New Customers': COLORS.blue, 'Promising': COLORS.primaryLighter, 'Need Attention': COLORS.warning, 'About to Sleep': COLORS.orange, 'At Risk': COLORS.bad, 'Cannot Lose Them': '#7C2D12', 'Hibernating': '#6B7280', 'Lost': '#374151' };
+        return { tooltip: { formatter: '{b}: {c} patients ({d}%)' }, series: [{ type: 'treemap', data: Object.entries(segMap).map(([n, v]) => ({ name: n, value: v })), label: { show: true, formatter: '{b}\n{c}', fontSize: 10 }, itemStyle: { borderColor: '#fff', borderWidth: 2, color: p => segColors[p.name] || COLORS.textMuted } }] };
+    }
+    function buildRFMMatrix(data) {
+        const grid = {};
+        data.forEach(d => { const key = d.r_score + '-' + d.f_score; if (!grid[key]) grid[key] = { r: d.r_score, f: d.f_score, count: 0 }; grid[key].count++; });
+        const rLabels = ['1', '2', '3', '4', '5']; const fLabels = ['1', '2', '3', '4', '5'];
+        const values = [];
+        Object.values(grid).forEach(g => { values.push([g.r - 1, g.f - 1, g.count]); });
+        return { tooltip: { formatter: p => 'R' + (p.data[0]+1) + ' x F' + (p.data[1]+1) + ': ' + p.data[2] + ' patients' }, grid: { left: 60, right: 40, top: 20, bottom: 40 }, xAxis: { type: 'category', data: rLabels, name: 'Recency Score', nameLocation: 'middle', nameGap: 25 }, yAxis: { type: 'category', data: fLabels, name: 'Frequency Score', nameLocation: 'middle', nameGap: 35 }, visualMap: { min: 0, max: Math.max(...values.map(v => v[2]), 1), calculable: true, orient: 'horizontal', left: 'center', bottom: 0, inRange: { color: [COLORS.primaryLighter, COLORS.primary, COLORS.primary] } }, series: [{ type: 'heatmap', data: values, label: { show: true }, emphasis: { itemStyle: { shadowBlur: 10, shadowColor: 'rgba(0,0,0,0.5)' } } }] };
+    }
+    function buildLTVDist(data) {
+        const segColors = { 'High Value': COLORS.purple, 'Medium Value': COLORS.primary, 'Low Value': COLORS.primaryMid, 'Minimal Value': COLORS.textMuted };
+        return { tooltip: { trigger: 'axis' }, grid: { left: 100, right: 60, top: 10, bottom: 20 }, xAxis: { type: 'value' }, yAxis: { type: 'category', data: data.map(d => d.ltv_segment).reverse() }, series: [{ type: 'bar', data: data.map(d => ({ value: d.patient_count, itemStyle: { color: segColors[d.ltv_segment] || COLORS.primary } })).reverse(), label: { show: true, position: 'right', formatter: p => p.value + ' patients' } }] };
+    }
+    function buildPatientRiskTable(data) {
+        const el = document.getElementById('table-patient-risk');
+        if (!el) return;
+        let rows = (data || []).slice(0, 20).map(d => '<tr><td>M***' + (d.patient_id || '').slice(-3) + '</td><td>' + (d.patient_status || '') + '</td><td>' + (d.value_tier || '') + '</td><td>' + (d.days_since_last_visit || 0) + '</td><td>' + fmtRM(d.revenue_at_risk) + '</td><td>' + (d.retention_action || '') + '</td></tr>').join('');
+        el.innerHTML = '<table class="data-table"><thead><tr><th>Patient</th><th>Status</th><th>Tier</th><th>Days</th><th>Rev at Risk</th><th>Action</th></tr></thead><tbody>' + (rows || '<tr><td colspan="6">No at-risk patients</td></tr>') + '</tbody></table>';
+    }
+    loadPatientKPIs();
+    loadChart('chart-rfm-treemap', '/api/patients/rfm', buildRFMTreemap);
+    loadChart('chart-rfm-matrix', '/api/patients/rfm', buildRFMMatrix);
+    loadChart('chart-ltv-dist', '/api/patients/ltv', buildLTVDist);
+        (async () => { const res = await fetch('/api/patients/risk?start_date=' + dateStart + '&end_date=' + dateEnd); const json = await res.json(); if (!json.error) buildPatientRiskTable(json.data); })();
+    </script>
+
+    <!-- TAB 4: PRODUCT & PACKAGE -->
+    <script>
+    function buildCategoryTrend(data) {
+        return { tooltip: { trigger: 'axis' }, legend: { data: ['Consultations', 'Services', 'Medications', 'Supplements', 'Skincare', 'Other'], bottom: 0 }, grid: { left: 50, right: 20, top: 20, bottom: 40 }, xAxis: { type: 'category', data: data.map(d => d.month), axisLabel: { rotate: 45, fontSize: 10 } }, yAxis: { type: 'value', name: '%', max: 100 }, series: [{ name: 'Consultations', type: 'line', stack: 'total', areaStyle: {}, data: data.map(d => d.consultations_pct || 0), itemStyle: { color: COLORS.primary } }, { name: 'Services', type: 'line', stack: 'total', areaStyle: {}, data: data.map(d => d.services_pct || 0), itemStyle: { color: COLORS.primaryMid } }, { name: 'Medications', type: 'line', stack: 'total', areaStyle: {}, data: data.map(d => d.medications_pct || 0), itemStyle: { color: COLORS.primaryLight } }, { name: 'Supplements', type: 'line', stack: 'total', areaStyle: {}, data: data.map(d => d.supplements_pct || 0), itemStyle: { color: COLORS.good } }, { name: 'Skincare', type: 'line', stack: 'total', areaStyle: {}, data: data.map(d => d.skincare_pct || 0), itemStyle: { color: COLORS.primaryLighter } }, { name: 'Other', type: 'line', stack: 'total', areaStyle: {}, data: data.map(d => d.other_pct || 0), itemStyle: { color: COLORS.textMuted } }] };
+    }
+    function buildPackageSplit(data) {
+        if (!data.length) return { title: { text: 'No data' } };
+        const d = data[0];
+        return { tooltip: { trigger: 'item', formatter: '{b}: {d}%' }, series: [{ type: 'pie', radius: ['40%', '70%'], data: [{ name: 'Standalone', value: d.standalone_total || 0, itemStyle: { color: COLORS.primary } }, { name: 'Package', value: d.package_total || 0, itemStyle: { color: COLORS.primaryMid } }], label: { show: true, formatter: '{b}\n{d}%', fontSize: 11 } }] };
+    }
+    function buildCategoryRevenue(data) {
+        // Aggregate data by branch to eliminate duplicates
+        const aggregatedData = {};
+        data.forEach(item => {
+            const branch = item.branch;
+            if (!aggregatedData[branch]) {
+                aggregatedData[branch] = {
+                    branch: branch,
+                    consultations_revenue: 0,
+                    services_revenue: 0,
+                    medications_revenue: 0,
+                    supplements_revenue: 0,
+                    skincare_revenue: 0,
+                    other_products_revenue: 0,
+                    total_revenue: 0,
+                    unique_patients: 0
+                };
+            }
+            aggregatedData[branch].consultations_revenue += (item.consultations_revenue || 0);
+            aggregatedData[branch].services_revenue += (item.services_revenue || 0);
+            aggregatedData[branch].medications_revenue += (item.medications_revenue || 0);
+            aggregatedData[branch].supplements_revenue += (item.supplements_revenue || 0);
+            aggregatedData[branch].skincare_revenue += (item.skincare_revenue || 0);
+            aggregatedData[branch].other_products_revenue += (item.other_products_revenue || 0);
+            aggregatedData[branch].total_revenue += (item.total_revenue || 0);
+            aggregatedData[branch].unique_patients += (item.unique_patients || 0);
+        });
+        
+        // Convert to array and take first 10
+        const aggArray = Object.values(aggregatedData).slice(0, 10);
+        
+        const categories = ['consultations_revenue', 'services_revenue', 'medications_revenue', 'supplements_revenue', 'skincare_revenue'];
+        const catLabels = ['Consultations', 'Services', 'Medications', 'Supplements', 'Skincare'];
+        const catColors = [COLORS.primary, COLORS.primaryMid, COLORS.primaryLight, COLORS.good, COLORS.primaryLighter];
+        const branches = aggArray.map(d => d.branch);
+        const series = categories.map((cat, i) => ({ name: catLabels[i], type: 'bar', stack: 'total', data: aggArray.map(d => d[cat] || 0), itemStyle: { color: catColors[i] } }));
+        return { tooltip: { trigger: 'axis' }, legend: { data: catLabels, bottom: 0 }, grid: { left: 100, right: 20, top: 20, bottom: 40 }, xAxis: { type: 'category', data: branches, axisLabel: { rotate: 45, fontSize: 10 } }, yAxis: { type: 'value', axisLabel: { formatter: v => 'RM ' + (v/1000).toFixed(0) + 'K' } }, series };
+    }
+    function buildPaymentMode(data) {
+        // Aggregate data by payment_mode to eliminate duplicates
+        const aggregatedData = {};
+        data.forEach(item => {
+            const paymentMode = item.payment_mode;
+            if (!aggregatedData[paymentMode]) {
+                aggregatedData[paymentMode] = {
+                    payment_mode: paymentMode,
+                    transaction_count: 0,
+                    total_amount: 0,
+                    avg_amount: 0
+                };
+            }
+            aggregatedData[paymentMode].transaction_count += (item.transaction_count || 0);
+            aggregatedData[paymentMode].total_amount += (item.total_amount || 0);
+        });
+        
+        // Recalculate average amount after aggregation
+        Object.values(aggregatedData).forEach(item => {
+            if(item.transaction_count > 0){
+                item.avg_amount = item.total_amount / item.transaction_count;
+            }
+        });
+        
+        // Convert to array and take all entries (or top N if needed)
+        const aggArray = Object.values(aggregatedData);
+        
+        return { tooltip: { trigger: 'axis' }, grid: { left: 120, right: 60, top: 10, bottom: 20 }, xAxis: { type: 'value' }, yAxis: { type: 'category', data: aggArray.map(d => d.payment_mode).reverse() }, series: [{ type: 'bar', data: aggArray.map(d => d.transaction_count).reverse(), itemStyle: { color: COLORS.primary }, label: { show: true, position: 'right' } }] };
+    }
+    function buildPackageTable(data) {
+        const el = document.getElementById('table-packages');
+        if (!el) return;
+        let rows = (data || []).slice(0, 15).map(d => '<tr><td>' + d.branch + '</td><td>' + (d.month || '') + '</td><td>' + fmtRM(d.total_package_revenue) + '</td><td>' + fmtPct(d.pkg_services_pct) + '</td><td>' + fmtPct(d.pkg_skincare_pct) + '</td><td>' + fmtPct(d.pkg_medications_pct) + '</td></tr>').join('');
+        el.innerHTML = '<table class="data-table"><thead><tr><th>Branch</th><th>Month</th><th>Pkg Revenue</th><th>Services%</th><th>Skincare%</th><th>Meds%</th></tr></thead><tbody>' + (rows || '<tr><td colspan="6">No data</td></tr>') + '</tbody></table>';
+    }
+    loadChart('chart-category-trend', '/api/products/category-mix', buildCategoryTrend);
+    loadChart('chart-package-split', '/api/products/package-split', buildPackageSplit);
+    loadChart('chart-category-revenue', '/api/products/category-revenue', buildCategoryRevenue);
+    loadChart('chart-payment-mode', '/api/payments/mode', buildPaymentMode);
+        (async () => { const res = await fetch('/api/packages/composition?start_date=' + dateStart + '&end_date=' + dateEnd); const json = await res.json(); if (!json.error) buildPackageTable(json.data); })();
+    </script>
+
+    <!-- TAB 5: AI PREDICTIONS -->
+    <script>
+    async function loadMLKPIs() {
+        const res = await fetch('/api/ml/predictions?start_date=' + dateStart + '&end_date=' + dateEnd);
+        const json = await res.json();
+        if (json.error || !json.data) return;
+        const d = json.data;
+        const highChurn = (d.risk_distribution || []).find(r => r.churn_risk_band === 'High');
+        const el1 = document.getElementById('kpi-churn-risk');
+        if (el1) el1.textContent = fmtNum(highChurn ? highChurn.patient_count : 0);
+        const totalUpsell = (d.risk_distribution || []).reduce((s, r) => s + (r.upsell_count || 0), 0);
+        const el2 = document.getElementById('kpi-upsell-opps');
+        if (el2) el2.textContent = fmtNum(totalUpsell);
+        const modelInfo = (d.model_info || [])[0];
+        const el4 = document.getElementById('kpi-model-auc');
+        if (el4) el4.textContent = modelInfo ? Number(modelInfo.auc_roc).toFixed(3) : '—';
+    }
+    async function loadMLPricingKPIs() {
+        const res = await fetch('/api/ml/pricing?start_date=' + dateStart + '&end_date=' + dateEnd);
+        const json = await res.json();
+        if (json.error || !json.data || !json.data.length) return;
+        const avgDiscount = json.data.reduce((s, d) => s + (d.discount_pct || 0), 0) / json.data.length;
+        const el = document.getElementById('kpi-avg-discount');
+        if (el) el.textContent = fmtPct(avgDiscount);
+    }
+    function buildChurnHistogram(data) {
+        const hist = data.churn_histogram || [];
+        return { tooltip: { trigger: 'axis' }, grid: { left: 50, right: 20, top: 20, bottom: 40 }, xAxis: { type: 'category', data: hist.map(h => (h.bin_start * 100).toFixed(0) + '%'), axisLabel: { fontSize: 10 } }, yAxis: { type: 'value', name: 'Patients' }, series: [{ type: 'bar', data: hist.map((h, i) => ({ value: h.patient_count, itemStyle: { color: i < 3 ? COLORS.good : i < 5 ? COLORS.warning : COLORS.bad } })), label: { show: true, position: 'top' } }] };
+    }
+    function buildRiskLevelPie(data) {
+        const dist = data.risk_distribution || [];
+        const bandColors = { 'Low': COLORS.good, 'Medium': COLORS.warning, 'High': COLORS.bad };
+        return { tooltip: { trigger: 'item', formatter: '{b}: {c} patients ({d}%)' }, series: [{ type: 'pie', radius: ['40%', '70%'], data: dist.map(d => ({ name: d.churn_risk_band, value: d.patient_count })), itemStyle: { color: p => bandColors[p.name] || COLORS.textMuted }, label: { show: true, formatter: '{b}\n{d}%', fontSize: 10 } }] };
+    }
+    function buildOfferTypeBar(pricingData) {
+        const offerMap = {};
+        (pricingData || []).forEach(d => { offerMap[d.offer_type] = (offerMap[d.offer_type] || 0) + 1; });
+        const offerColors = { discount: COLORS.primary, bundle: COLORS.primaryMid, retention: COLORS.good, vip_perk: COLORS.blue, win_back: COLORS.warning, welcome: COLORS.purple, standard: COLORS.textMuted };
+        return { tooltip: { trigger: 'axis' }, grid: { left: 80, right: 40, top: 10, bottom: 20 }, xAxis: { type: 'value' }, yAxis: { type: 'category', data: Object.keys(offerMap).reverse() }, series: [{ type: 'bar', data: Object.values(offerMap).reverse(), itemStyle: { color: p => offerColors[Object.keys(offerMap).reverse()[p.dataIndex]] || COLORS.primary }, label: { show: true, position: 'right' } }] };
+    }
+    function buildOutreachTable(data) {
+        const el = document.getElementById('table-outreach');
+        if (!el) return;
+        const filtered = (data || []).filter(d => d.churn_probability > 0.6 || d.pkg_upsell_prob > 0.7).slice(0, 20);
+        let rows = filtered.map(d => '<tr><td>M***' + (d.mrn || '').slice(-3) + '</td><td style="color:' + (d.churn_probability > 0.6 ? COLORS.bad : d.churn_probability > 0.3 ? COLORS.warning : COLORS.good) + '">' + (d.churn_probability * 100).toFixed(0) + '%</td><td style="color:' + (d.pkg_upsell_prob > 0.7 ? COLORS.good : COLORS.textMuted) + '">' + (d.pkg_upsell_prob * 100).toFixed(0) + '%</td><td>' + (d.offer_type || '') + '</td><td>' + fmtRM(d.max_discount_rm) + '</td><td>' + (d.recommended_action || '') + '</td></tr>').join('');
+        el.innerHTML = '<table class="data-table"><thead><tr><th>Patient</th><th>Churn%</th><th>Upsell%</th><th>Offer</th><th>Discount Cap</th><th>Action</th></tr></thead><tbody>' + (rows || '<tr><td colspan="6">No high-priority patients</td></tr>') + '</tbody></table>';
+    }
+    loadMLKPIs();
+    loadMLPricingKPIs();
+    loadChart('chart-churn-hist', '/api/ml/predictions', buildChurnHistogram);
+    (async () => {
+        const [predRes, priceRes] = await Promise.all([fetch('/api/ml/predictions?start_date=' + dateStart + '&end_date=' + dateEnd), fetch('/api/ml/pricing?start_date=' + dateStart + '&end_date=' + dateEnd)]);
+        const pred = await predRes.json(); const price = await priceRes.json();
+        if (!pred.error) { const distEl = document.getElementById('chart-risk-level'); if (distEl) { if (charts['chart-risk-level']) charts['chart-risk-level'].dispose(); charts['chart-risk-level'] = echarts.init(distEl); charts['chart-risk-level'].setOption(buildRiskLevelPie(pred.data), true); } }
+        if (!price.error) { const offerEl = document.getElementById('chart-offer-type'); if (offerEl) { if (charts['chart-offer-type']) charts['chart-offer-type'].dispose(); charts['chart-offer-type'] = echarts.init(offerEl); charts['chart-offer-type'].setOption(buildOfferTypeBar(price.data), true); } }
+        if (!price.error) buildOutreachTable(price.data);
+    })();
+    </script>
+
+    <!-- TAB 6: GEOSPATIAL -->
+    <script>
+    function buildGeoMap(patientsData, branchesData) {
+        const bandColors = { '<2km': COLORS.good, '2-5km': COLORS.primaryMid, '5-10km': COLORS.warning, '10-20km': COLORS.orange, '20km+': COLORS.bad };
+        const bandSeries = {};
+        (patientsData || []).forEach(d => { const band = d.nearest_branch_dist_band || 'Unknown'; if (!bandSeries[band]) bandSeries[band] = []; bandSeries[band].push([d.patient_lng, d.patient_lat]); });
+        const series = Object.entries(bandSeries).map(([band, coords]) => ({ name: band, type: 'scatter', data: coords, symbolSize: 4, itemStyle: { color: bandColors[band] || COLORS.textMuted, opacity: 0.6 } }));
+        const branchCoords = (branchesData || []).filter(d => d.branch_lat && d.branch_lng);
+        if (branchCoords.length) {
+            series.push({ name: 'Branches', type: 'scatter', data: branchCoords.map(b => ({ value: [b.branch_lng, b.branch_lat], name: b.branch_name, symbolSize: (b.catchment_radius_km || 5) * 2 })), itemStyle: { color: COLORS.primary, borderColor: '#fff', borderWidth: 2 }, label: { show: true, formatter: p => p.data.name, position: 'top', fontSize: 9, color: COLORS.primary } });
+        }
+        return { tooltip: { trigger: 'item' }, legend: { data: [...Object.keys(bandSeries), 'Branches'], bottom: 0, type: 'scroll' }, grid: { left: 20, right: 20, top: 20, bottom: 50 }, xAxis: { type: 'value', name: 'Longitude', nameLocation: 'middle', nameGap: 25, scale: true, splitLine: { show: false } }, yAxis: { type: 'value', name: 'Latitude', nameLocation: 'middle', nameGap: 35, scale: true, splitLine: { show: false } }, series };
+    }
+    function buildDistanceBand(patientsData) {
+        const bandMap = {};
+        (patientsData || []).forEach(d => { bandMap[d.nearest_branch_dist_band] = (bandMap[d.nearest_branch_dist_band] || 0) + 1; });
+        const bandColors = { '<2km': COLORS.good, '2-5km': COLORS.primaryMid, '5-10km': COLORS.warning, '10-20km': COLORS.orange, '20km+': COLORS.bad };
+        return { tooltip: { trigger: 'item', formatter: '{b}: {c} patients ({d}%)' }, series: [{ type: 'pie', radius: ['40%', '70%'], data: Object.entries(bandMap).map(([n, v]) => ({ name: n, value: v })), itemStyle: { color: p => bandColors[p.name] || COLORS.textMuted }, label: { show: true, formatter: '{b}\n{d}%', fontSize: 10 } }] };
+    }
+    function buildCatchmentPenetration(data) {
+        const sorted = [...data].sort((a, b) => (b.catchment_penetration_pct || 0) - (a.catchment_penetration_pct || 0)).slice(0, 10);
+        return { tooltip: { trigger: 'axis' }, legend: { data: ['Within Catchment', 'Outside Catchment'], bottom: 0 }, grid: { left: 100, right: 20, top: 20, bottom: 40 }, xAxis: { type: 'category', data: sorted.map(d => d.branch_name), axisLabel: { rotate: 45, fontSize: 9 } }, yAxis: { type: 'value', name: 'Patients' }, series: [{ name: 'Within Catchment', type: 'bar', stack: 'total', data: sorted.map(d => d.patients_within_catchment || 0), itemStyle: { color: COLORS.good } }, { name: 'Outside Catchment', type: 'bar', stack: 'total', data: sorted.map(d => d.patients_outside_catchment || 0), itemStyle: { color: COLORS.border } }] };
+    }
+    function buildCannibalization(data) {
+        const branches = [...new Set(data.flatMap(d => [d.branch_a_name, d.branch_b_name]))].filter(Boolean);
+        const branchMap = {};
+        branches.forEach((b, i) => branchMap[b] = i);
+        const values = data.filter(d => d.branch_a_name && d.branch_b_name).map(d => [branchMap[d.branch_a_name], branchMap[d.branch_b_name], d.cannibalization_index || 0]);
+        return { tooltip: { formatter: p => branches[p.data[0]] + ' <-> ' + branches[p.data[1]] + ': ' + (p.data[2] * 100).toFixed(1) + '%' }, grid: { left: 100, right: 40, top: 20, bottom: 80 }, xAxis: { type: 'category', data: branches, axisLabel: { rotate: 45, fontSize: 9 } }, yAxis: { type: 'category', data: branches, axisLabel: { fontSize: 9 } }, visualMap: { min: 0, max: 1, calculable: true, orient: 'horizontal', left: 'center', bottom: 0, inRange: { color: [COLORS.good, COLORS.warning, COLORS.bad] } }, series: [{ type: 'heatmap', data: values, label: { show: true, formatter: p => (p.data[2] * 100).toFixed(0) + '%', fontSize: 8 } }] };
+    }
+    function buildWhitespaceTable(data) {
+        const el = document.getElementById('table-whitespace');
+        if (!el) return;
+        let rows = (data || []).slice(0, 10).map(d => '<tr><td>' + (d.cluster_label || '') + '</td><td>' + (d.patient_count || 0) + '</td><td>' + (d.nearest_branch_name || '') + '</td><td>' + (d.distance_to_nearest_branch_km || 0).toFixed(1) + ' km</td><td><span style="color:' + (d.site_priority_score > 70 ? COLORS.good : d.site_priority_score > 40 ? COLORS.warning : COLORS.textMuted) + '">' + (d.site_priority_score || 0) + '</span></td></tr>').join('');
+        el.innerHTML = '<table class="data-table"><thead><tr><th>Area</th><th>Patients</th><th>Nearest Branch</th><th>Distance</th><th>Priority</th></tr></thead><tbody>' + (rows || '<tr><td colspan="5">No whitespace opportunities</td></tr>') + '</tbody></table>';
+    }
+    (async () => {
+        const [patRes, brRes] = await Promise.all([fetch('/api/geo/patients?start_date=' + dateStart + '&end_date=' + dateEnd), fetch('/api/geo/branches?start_date=' + dateStart + '&end_date=' + dateEnd)]);
+        const pat = await patRes.json(); const br = await brRes.json();
+        const mapEl = document.getElementById('chart-geo-map');
+        if (mapEl) { if (charts['chart-geo-map']) charts['chart-geo-map'].dispose(); charts['chart-geo-map'] = echarts.init(mapEl); charts['chart-geo-map'].setOption(buildGeoMap(pat.data || [], br.data || []), true); }
+        if (!pat.error) { const distEl = document.getElementById('chart-distance-band'); if (distEl) { if (charts['chart-distance-band']) charts['chart-distance-band'].dispose(); charts['chart-distance-band'] = echarts.init(distEl); charts['chart-distance-band'].setOption(buildDistanceBand(pat.data), true); } }
+    })();
+    loadChart('chart-catchment', '/api/geo/catchment', buildCatchmentPenetration);
+    loadChart('chart-cannibalization', '/api/geo/cannibalization', buildCannibalization);
+        (async () => { const res = await fetch('/api/geo/whitespace?start_date=' + dateStart + '&end_date=' + dateEnd); const json = await res.json(); if (!json.error) buildWhitespaceTable(json.data); })();
+    </script>
+</body>
+</html>

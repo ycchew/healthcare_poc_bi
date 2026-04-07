@@ -1,0 +1,131 @@
+ST-06 Geospatial Analytics - Plan Compliance Audit
+===================================================
+Date: 2026-04-03
+Auditor: Sisyphus-Junior (F1. Plan Compliance Audit)
+
+MUST HAVE VERIFICATION (15 items)
+=================================
+1. Azure Maps API integration with subscription-key authentication
+   ✓ VERIFIED: geocoding_pipeline.py uses x-ms-subscription-key header
+   ✓ File: ST-06/python/geocoding_pipeline.py lines 126-140
+
+2. Nominatim fallback for rate limit handling
+   ✓ VERIFIED: geocoding_with_nominatim() method implemented
+   ✓ File: ST-06/python/geocoding_pipeline.py lines 214-285
+
+3. Four-level geocoding: Full → Street+City → City+State → ZIP
+   ✓ VERIFIED: geocode_with_fallback() implements 4 levels
+   ✓ File: ST-06/python/geocoding_pipeline.py lines 322-400
+
+4. PostGIS geometry columns with GIST indexes
+   ✓ VERIFIED: 7 tables with geometry columns and GIST indexes
+   ✓ File: ST-06/sql/01_postgis_setup.sql
+
+5. Patient-branch distance matrix (Haversine formula)
+   ✓ VERIFIED: calculate_patient_branch_distances() function
+   ✓ File: ST-06/sql/03_analytical_views.sql lines 15-130
+
+6. DBSCAN clustering with configurable parameters
+   ✓ VERIFIED: run_dbscan_clustering() with eps_km, min_samples
+   ✓ File: ST-06/python/geo_analysis.py lines 153-280
+
+7. Cannibalization index (shared patient percentage)
+   ✓ VERIFIED: run_cannibalization_analysis() with index calculation
+   ✓ File: ST-06/python/geo_analysis.py lines 282-447
+
+8. Whitespace site priority scoring
+   ✓ VERIFIED: analyze_whitespace() with SPS formula
+   ✓ File: ST-06/python/geo_analysis.py lines 449-565
+
+9. Seven interactive Folium maps
+   ✓ VERIFIED: 7 map functions (build_*_map)
+   ✓ File: ST-06/python/geo_analysis.py lines 567-1198
+   ✓ Maps: map_01_patient_origin.html through map_07_new_patient_flow.html
+
+10. Six Power BI materialized views
+    ✓ VERIFIED: 6 MVWs created with unique indexes
+    ✓ File: ST-06/sql/04_materialized_views.sql
+    ✓ MVWs: mvw_patient_geo_enriched, mvw_branch_patient_summary, mvw_catchment_analysis, mvw_cannibalization_summary, mvw_patient_geo_clusters, mvw_whitespace_opportunity
+
+11. Incremental geocoding pipeline
+    ✓ VERIFIED: load_patients_for_geocoding() skips already geocoded
+    ✓ File: ST-06/python/geocoding_pipeline.py lines 519-561
+
+12. pgAgent scheduling for Windows
+    ✓ VERIFIED: 3 jobs defined (daily geocoding, daily analysis, weekly refresh)
+    ✓ File: ST-06/sql/05_scheduling.sql
+
+13. Test suite (test_geocoding.py)
+    ✓ VERIFIED: 14 test functions
+    ✓ File: ST-06/python/test_geocoding.py
+
+14. Test suite (test_geo_analysis.py)
+    ✓ VERIFIED: 23 test functions
+    ✓ File: ST-06/python/test_geo_analysis.py
+
+15. Five SQL files
+    ✓ VERIFIED: 01_postgis_setup.sql, 02_branch_geocoding_tables.sql, 03_analytical_views.sql, 04_materialized_views.sql, 05_scheduling.sql
+    ✓ Directory: ST-06/sql/
+
+MUST NOT HAVE VERIFICATION (8 guardrails)
+=========================================
+1. Real-time geocoding API endpoint
+   ✓ NOT FOUND: No endpoint/routes/implementations
+
+2. Google Maps API integration
+   ✓ NOT FOUND: grep returns no matches for "google"
+
+3. pg_cron scheduling (Windows uses pgAgent)
+   ✓ NOT FOUND: grep returns no matches for "pg_cron"
+
+4. Routing/driving directions (straight-line only)
+   ✓ NOT FOUND: grep returns no matches for "directions", "routing", "Route"
+
+5. Territory optimization algorithms
+   ✓ NOT FOUND: No territory optimization code
+
+6. Patient movement tracking
+   ✓ NOT FOUND: No patient movement tracking code
+
+7. More than 7 maps
+   ✓ COMPLIANT: Exactly 7 map functions verified
+
+8. More than 6 MVWs
+   ✓ COMPLIANT: Exactly 6 MVWs verified
+
+FILES VERIFIED
+==============
+SQL Files (5):
+- ST-06/sql/01_postgis_setup.sql (456 lines) - PostGIS extension, 7 tables
+- ST-06/sql/02_branch_geocoding_tables.sql - Branch geocoding tables
+- ST-06/sql/03_analytical_views.sql (935 lines) - 12 views created
+- ST-06/sql/04_materialized_views.sql (465 lines) - 6 MVWs
+- ST-06/sql/05_scheduling.sql (661 lines) - pgAgent jobs
+
+Python Files (6):
+- ST-06/python/load_postcode_data.py - Malaysia postcode loader
+- ST-06/python/branch_geocoding.py - Branch geocoding pipeline
+- ST-06/python/geocoding_pipeline.py (1170 lines) - Patient geocoding with 4-level fallback
+- ST-06/python/geo_analysis.py (1417 lines) - DBSCAN, cannibalization, whitespace, 7 Folium maps
+- ST-06/python/test_geocoding.py (326 lines) - 14 tests
+- ST-06/python/test_geo_analysis.py (475 lines) - 23 tests
+
+Total Python: 4,458 lines
+Total SQL: 2,608 lines
+
+MISSING ITEMS
+=============
+- ST-06/README.md - Documentation not created
+- ST-06/maps/*.html - Maps directory empty (requires database connectivity)
+- .sisyphus/evidence/ - Evidence directory was empty
+
+VERDICT SUMMARY
+===============
+Must Have: 15/15 ✓
+Must NOT Have: 8/8 ✓ (all guardrails followed)
+Tasks: 15/15 ✓ (all implementation files exist)
+
+VERDICT: APPROVE (conditional)
+- All code implementation complete
+- Maps generation requires database connectivity
+- README.md documentation should be created

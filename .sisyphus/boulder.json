@@ -1,0 +1,40 @@
+{
+  "active_plan": "D:\\dev\\healthcare_poc_bi\\.sisyphus\\plans\\st-06-geospatial-analytics.md",
+  "started_at": "2026-04-02T15:09:53.749Z",
+  "session_ids": [
+    "ses_2b185fd6fffeLX774R4sgv312U",
+    "ses_2b13f6a1affeqOx4m2qFQqJX7v",
+    "ses_2b13d6b88ffey3rVJ2AttuiiOI",
+    "ses_2b13d6b8fffeeR3vr9JNBDyVWB",
+    "ses_2b13d6b76ffe01hEVmk46drN0K",
+    "ses_2b138ce8cffeAdsTvazdOjPg2I",
+    "ses_2b137c981ffegRnL0eFf5F85W4",
+    "ses_2b134c5c7ffeut5zLF6AWeJ2h8",
+    "ses_2b10a4c56ffe6bntAT9MV4LoWb",
+    "ses_2b104fee6ffeZ7um5NSQLR7SeH",
+    "ses_2b10108aeffeXq4WDzAgN1q44L",
+    "ses_2b0fe2d4bffezv3IKSboK6wdgb",
+    "ses_2b0fb4457ffejm3Fct2Fws2KS6",
+    "ses_2b0f6107affe5lN5l6yJuDy7BG",
+    "ses_2b0f38c24ffewf15NepMLXYaVY",
+    "ses_2b0ed83ceffevDOSGfqFqjQafS",
+    "ses_2b0ea9dbbfferyAqPGjxt0FvZX",
+    "ses_2b0e429e9ffe2xIsi7Q3ot2mIG",
+    "ses_2b0e278b6ffegafrrnuBmjFCsv",
+    "ses_2b0e278b3fferQwoZcLwE3rrfG",
+    "ses_2b0e278b5ffewCeVa3f2l7NimD"
+  ],
+  "plan_name": "st-06-geospatial-analytics",
+  "agent": "atlas",
+  "task_sessions": {
+    "final-wave:f1": {
+      "task_key": "final-wave:f1",
+      "task_label": "F1",
+      "task_title": "**Plan Compliance Audit** — `oracle`",
+      "session_id": "ses_2b0e278b6ffegafrrnuBmjFCsv",
+      "agent": "Sisyphus-Junior",
+      "category": "unspecified-high",
+      "updated_at": "2026-04-02T16:56:02.807Z"
+    }
+  }
+}
