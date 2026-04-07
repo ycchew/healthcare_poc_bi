@@ -170,7 +170,7 @@ python branch_geocoding.py --test
 **CSV Format** (`branch_address.csv`):
 ```
 branch_name,address,city,state,zip
-Klinik Dr Ko Ampang,"73, Jalan Memanda 1",Ampang,Selangor,68000
+Klinik Dr Kong Ampang,"747, Jalan Memanda 11",Ampang,Selangor,68000
 ```
 
 ### Module: `geocoding_pipeline.py`
