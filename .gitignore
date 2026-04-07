@@ -6,7 +6,6 @@ node_modules/
 .vscode/
 *.swp
 *.swo
-.sisyphus/
 
 # OS
 .DS_Store
@@ -41,6 +40,7 @@ nul
 # privacy
 docs/
 backup/
+ST-*_README.md
 
 # Python virtual environments
 .venv/
